@@ -23,7 +23,7 @@ jobs:
           path: "~/.cache/bazel"
           key: bazel
       - name: Test Copybara
-        run: bazel test //java/com/google/copybara
+        run: bazel test //...
       - name: Build Copybara
         run: bazel build //java/com/google/copybara:copybara_deploy.jar
       - name: Store built JAR
