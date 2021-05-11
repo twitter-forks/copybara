@@ -1,0 +1,47 @@
+name: "Build JAR"
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag to create and release.'
+        required: true
+        default: 'latest'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Java JDK
+        uses: actions/setup-java@v2.0.0
+        with:
+          distribution: 'adopt'
+          java-version: '8'
+      - name: Setup Bazelisk
+        uses: bazelbuild/setup-bazelisk@v1.0.1
+      - name: Mount bazel cache  # Optional
+        uses: actions/cache@v1
+        with:
+          path: "~/.cache/bazel"
+          key: bazel
+      - name: Build Copybara
+        run: "bazel build //java/com/google/copybara:copybara_deploy.jar"
+      - name: Test Copybara
+        run: "bazel test //..."
+      - name: Rename JAR
+        run: "mv bazel-bin/java/com/google/copybara/copybara_deploy.jar copybara-${{ github.event.inputs.release_tag }}.jar"
+      - name: Store built JAR
+        uses: actions/upload-artifact@v2
+        with:
+          name: "copybara-${{ github.event.inputs.release_tag }}.jar"
+          path: "copybara-${{ github.event.inputs.release_tag }}.jar"
+          if-no-files-found: error
+      - name: Automatic Releases
+        uses: marvinpinto/action-automatic-releases@v1.2.0
+        with:
+          automatic_release_tag: "release-${{ github.event.inputs.release_tag }}"
+          prerelease: false
+          files: "copybara-${{ github.event.inputs.release_tag }}.jar"
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+
