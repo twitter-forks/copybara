@@ -22,10 +22,10 @@ jobs:
         with:
           path: "~/.cache/bazel"
           key: bazel
-      - name: Test Copybara
-        run: bazel test //...
       - name: Build Copybara
         run: bazel build //java/com/google/copybara:copybara_deploy.jar
+      - name: Test Copybara
+        run: bazel test //...
       - name: Store built JAR
         uses: actions/upload-artifact@v2
         with:
@@ -35,8 +35,6 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v0.1.5
         with:
-          tag_name: ${{ steps.vars.outputs.short_sha }}
           files: bazel-bin/java/com/google/copybara/copybara_deploy.jar
-          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
