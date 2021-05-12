@@ -2,14 +2,14 @@ name: "Build JAR"
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: 0 9 * */2 * # At 9am every two months. Artifact retention is 90 days
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: vars
+        run: echo "::set-output name=short_sha::$(git rev-parse --short HEAD)"
       - name: Setup Java JDK
         uses: actions/setup-java@v2.0.0
         with:
@@ -32,3 +32,11 @@ jobs:
           name: copybara.jar
           path: bazel-bin/java/com/google/copybara/copybara_deploy.jar
           if-no-files-found: error
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v0.1.5
+        with:
+          tag_name: ${{ steps.vars.outputs.short_sha }}
+          files: bazel-bin/java/com/google/copybara/copybara_deploy.jar
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
