@@ -2,14 +2,17 @@ name: "Build JAR"
 
 on:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag to create and release.'
+        required: true
+        default: 'latest'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: vars
-        run: echo "::set-output name=short_sha::$(git rev-parse --short HEAD)"
       - name: Setup Java JDK
         uses: actions/setup-java@v2.0.0
         with:
@@ -32,9 +35,11 @@ jobs:
           name: copybara.jar
           path: bazel-bin/java/com/google/copybara/copybara_deploy.jar
           if-no-files-found: error
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v0.1.5
+      - name: Automatic Releases
+        uses: marvinpinto/action-automatic-releases@v1.2.0
         with:
+          automatic_release_tag: "${{ github.event.inputs.release_tag }}"
+          prerelease: false
           files: bazel-bin/java/com/google/copybara/copybara_deploy.jar
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+
